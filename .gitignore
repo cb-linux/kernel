@@ -1,0 +1,10 @@
+# Ignore kernel files built or downloaded by kernel/build.sh
+*
+!build.sh
+!kernel.flags
+!patches
+!logo
+logo/*
+!logo/logo.png
+!genimg.sh
+!.gitignore
