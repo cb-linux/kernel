@@ -1,0 +1,98 @@
+diff --git a/sound/hda/intel-dsp-config.c b/sound/hda/intel-dsp-config.c
+index 267b94ec0..dd81f18fd 100644
+--- a/sound/hda/intel-dsp-config.c
++++ b/sound/hda/intel-dsp-config.c
+@@ -88,7 +88,7 @@ static const struct config_entry config_table[] = {
+ 			{
+ 				.ident = "Google Chromebooks",
+ 				.matches = {
+-					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
++					DMI_MATCH(DMI_BIOS_VENDOR, "coreboot"),
+ 				}
+ 			},
+ 			{}
+@@ -109,7 +109,7 @@ static const struct config_entry config_table[] = {
+ 			{
+ 				.ident = "Google Chromebooks",
+ 				.matches = {
+-					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
++					DMI_MATCH(DMI_BIOS_VENDOR, "coreboot"),
+ 				}
+ 			},
+ 			{}
+@@ -129,7 +129,7 @@ static const struct config_entry config_table[] = {
+ 			{
+ 				.ident = "Google Chromebooks",
+ 				.matches = {
+-					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
++					DMI_MATCH(DMI_BIOS_VENDOR, "coreboot"),
+ 				}
+ 			},
+ 			{}
+@@ -154,7 +154,7 @@ static const struct config_entry config_table[] = {
+ 			{
+ 				.ident = "Google Chromebooks",
+ 				.matches = {
+-					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
++					DMI_MATCH(DMI_BIOS_VENDOR, "coreboot"),
+ 				}
+ 			},
+ 			{}
+@@ -187,7 +187,7 @@ static const struct config_entry config_table[] = {
+ 			{
+ 				.ident = "Google Chromebooks",
+ 				.matches = {
+-					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
++					DMI_MATCH(DMI_BIOS_VENDOR, "coreboot"),
+ 				}
+ 			},
+ 			{}
+@@ -208,7 +208,7 @@ static const struct config_entry config_table[] = {
+ 			{
+ 				.ident = "Google Chromebooks",
+ 				.matches = {
+-					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
++					DMI_MATCH(DMI_BIOS_VENDOR, "coreboot"),
+ 				}
+ 			},
+ 			{}
+@@ -229,7 +229,7 @@ static const struct config_entry config_table[] = {
+ 			{
+ 				.ident = "Google Chromebooks",
+ 				.matches = {
+-					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
++					DMI_MATCH(DMI_BIOS_VENDOR, "coreboot"),
+ 				}
+ 			},
+ 			{
+@@ -297,7 +297,7 @@ static const struct config_entry config_table[] = {
+ 			{
+ 				.ident = "Google Chromebooks",
+ 				.matches = {
+-					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
++					DMI_MATCH(DMI_BIOS_VENDOR, "coreboot"),
+ 				}
+ 			},
+ 			{}
+@@ -327,7 +327,7 @@ static const struct config_entry config_table[] = {
+ 			{
+ 				.ident = "Google Chromebooks",
+ 				.matches = {
+-					DMI_MATCH(DMI_SYS_VENDOR, "Google"),
++					DMI_MATCH(DMI_BIOS_VENDOR, "coreboot"),
+ 				}
+ 			},
+ 			{}
+diff --git a/sound/soc/sof/sof-pci-dev.c b/sound/soc/sof/sof-pci-dev.c
+index 3ef8927de..32fc8817a 100644
+--- a/sound/soc/sof/sof-pci-dev.c
++++ b/sound/soc/sof/sof-pci-dev.c
+@@ -96,7 +96,7 @@ static const struct dmi_system_id community_key_platforms[] = {
+ 	{
+ 		.ident = "Google Chromebooks",
+ 		.matches = {
+-			DMI_MATCH(DMI_SYS_VENDOR, "Google"),
++			DMI_MATCH(DMI_BIOS_VENDOR, "coreboot"),
+ 		}
+ 	},
+ 	{},

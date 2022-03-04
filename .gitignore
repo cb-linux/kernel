@@ -3,6 +3,7 @@
 !build.sh
 !kernel.flags
 !patches
+!patches/*
 !logo
 logo/*
 !logo/logo.png

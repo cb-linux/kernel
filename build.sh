@@ -14,14 +14,14 @@ read -p "What kernel version would you like? (chromeos-5.10) " KERNEL_VERSION
 # )
 
 echo "Cloning kernel $KERNEL_VERSION with --depth 1"
-# Latest commit for 5.4: 533e47fa98690d0fe210e0a01777caf96b887a75
+# Latest commit tested for 5.10: 142ef9297957f6df8a08f75d772ae8a5448c6f6c
 git clone --branch $KERNEL_VERSION --depth 1 https://chromium.googlesource.com/chromiumos/third_party/kernel.git
 cd kernel
 
-# echo "Patching the kernel to add logo support"
-# cp ../logo/logo_final.ppm drivers/video/logo/logo_linux_clut224.ppm
-# echo "mod" >> .gitignore
-# touch .scmversion
+echo "Patching the kernel"
+git apply ../patches/*
+echo "mod" >> .gitignore
+touch .scmversion
 
 echo "Copying and updating kernel config"
 ls .config || cp ../../kernel.conf .config || exit
