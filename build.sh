@@ -1,21 +1,23 @@
 #!/bin/bash
 
-read -p "What kernel version would you like? (chromeos-5.10) " KERNEL_VERSION
+echo "What kernel version would you like?"
+echo "This can be any ChromeOS kernel branch, but the recommended versions are:"
+printf "chromeos-5.10:\n  (Kernel version that is up-to-date and has good audio support with SOF)\n"
+printf "alt-chromeos-5.10:\n  (Kernel version that is up-to-date but is pinned to a commit that supports KBL/SKL devices which do not support SOF)\n"
+printf "chromeos-5.4:\n  (Often causes more issues despite being a commonly-used kernel in ChromeOS)\n"
+read KERNEL_VERSION
 
-# read -p "Are you satisfied with the current logo? " -n 1 -r
-# echo
+echo "Cloning kernel $KERNEL_VERSION"
 
-# (
-#     # Bootlogo not working for now
-#     cd logo
-#     mogrify -format ppm "logo.png"
-#     ppmquant 224 logo.ppm > logo_224.ppm
-#     pnmnoraw logo_224.ppm > logo_final.ppm
-# )
-
-echo "Cloning kernel $KERNEL_VERSION with --depth 1"
 # Latest commit tested for 5.10: 142ef9297957f6df8a08f75d772ae8a5448c6f6c
-git clone --branch $KERNEL_VERSION --depth 1 https://chromium.googlesource.com/chromiumos/third_party/kernel.git
+
+if [[ $KERNEL_VERSION == "alt-chromeos-5.10" ]]; then
+    git clone --branch $KERNEL_VERSION --single-branch https://chromium.googlesource.com/chromiumos/third_party/kernel.git
+    git checkout $(git rev-list -n 1 --first-parent --before="2021-08-1 23:59" $KERNEL_VERSION)
+else
+    git clone --branch $KERNEL_VERSION --single-branch --depth 1 https://chromium.googlesource.com/chromiumos/third_party/kernel.git
+fi
+
 cd kernel
 
 echo "Patching the kernel"
@@ -24,7 +26,17 @@ echo "mod" >> .gitignore
 touch .scmversion
 
 echo "Copying and updating kernel config"
-ls .config || cp ../../kernel.conf .config || exit
+
+if [[ $KERNEL_VERSION == "alt-chromeos-5.10" ]]; then
+    BZIMAGE="bzImage.alt"
+    MODULES="modules.alt.tar.xz"
+    ls .config || cp ../../kernel.alt.conf .config || exit
+else
+    BZIMAGE="bzImage"
+    MODULES="modules.tar.xz"
+    ls .config || cp ../../kernel.conf .config || exit
+fi
+
 make olddefconfig
 
 read -p "Would you like to make edits to the kernel config? (y/n) " -n 1 -r
@@ -36,7 +48,11 @@ fi
 read -p "Would you like to write the new config to github? (y/n) " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
-    cp .config ../../kernel.conf
+    if [[ $KERNEL_VERSION == "alt-chromeos-5.10" ]]; then
+        cp .config ../../kernel.alt.conf
+    else
+        cp .config ../../kernel.conf
+    fi
 fi
 
 echo "Building kernel"
@@ -49,7 +65,7 @@ else
 fi
 echo "bzImage and modules built"
 
-cp arch/x86/boot/bzImage ../
+cp arch/x86/boot/bzImage ../$BZIMAGE
 echo "bzImage created!"
 
 futility --debug vbutil_kernel \
@@ -62,12 +78,13 @@ futility --debug vbutil_kernel \
     --pack ../bzImage.signed
 echo "Signed bzImage created\!" # Shell expansion weirdness
 
+rm -rf mod || true
 mkdir mod
 make -j8 modules_install INSTALL_MOD_PATH=mod
 
 # Creates an archive containing /lib/modules/...
 cd mod
-tar cvfJ ../../modules.tar.xz lib/
+tar cvfJ ../../$MODULES lib/
 cd ..
 echo "modules.tar.xz created!"
 
