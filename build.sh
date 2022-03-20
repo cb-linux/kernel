@@ -29,10 +29,19 @@ else
     git clone --branch $KERNEL_VERSION --single-branch --depth 1 https://chromium.googlesource.com/chromiumos/third_party/kernel.git $KERNEL_VERSION || true
 fi
 
+(
+    # Bootlogo not working for now
+    cd logo
+    mogrify -format ppm "logo.png"
+    ppmquant 224 logo.ppm > logo_224.ppm
+    pnmnoraw logo_224.ppm > logo_final.ppm
+)
+
 cd $KERNEL_VERSION
 
 echo "Patching the kernel"
-git apply ../patches/* || true
+cp ../logo/logo_final.ppm drivers/video/logo/logo_linux_clut224.ppm
+git apply ../patches/* --ignore-space-change --ignore-whitespace || true
 echo "mod" >> .gitignore
 touch .scmversion
 
