@@ -1,15 +1,25 @@
 #!/bin/bash
 
+sudo apt install -y imagemagick git build-essential ncurses-dev xz-utils libssl-dev bc flex libelf-dev bison
+
 # Exit on errors
 set -e
 
-echo "What kernel version would you like? (choose a number 1-3)"
-echo "This can be any ChromeOS kernel branch, but the recommended versions are:"
-printf "1: chromeos-5.10:\n  (Kernel version that is up-to-date and has good audio support with SOF)\n"
-printf "2: alt-chromeos-5.10:\n  (Kernel version that is up-to-date but is pinned to a commit that supports KBL/SKL devices which do not support SOF)\n"
-printf "3: chromeos-5.4:\n  (Often causes more issues despite being a commonly-used kernel in ChromeOS)\n"
+if [[ $# -eq 0 ]]; then
+    
+    echo "What kernel version would you like? (choose a number 1-3)"
+    echo "This can be any ChromeOS kernel branch, but the recommended versions are:"
+    printf "1: chromeos-5.10:\n  (Kernel version that is up-to-date and has good audio support with SOF)\n"
+    printf "2: alt-chromeos-5.10:\n  (Kernel version that is up-to-date but is pinned to a commit that supports KBL/SKL devices which do not support SOF)\n"
+    printf "3: chromeos-5.4:\n  (Often causes more issues despite being a commonly-used kernel in ChromeOS)\n"
 
-read KERNEL_VERSION
+    read KERNEL_VERSION
+
+else
+
+    export KERNEL_VERSION="chromeos-5.10"
+
+fi
 
 case $KERNEL_VERSION in
     "1"|"chromeos-5.10")     KERNEL_VERSION="chromeos-5.10"     ;;
@@ -59,30 +69,39 @@ fi
 
 make olddefconfig
 
-read -p "Would you like to make edits to the kernel config? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    make menuconfig
-fi
+if [[ ! -v PS1 ]]; then
 
-read -p "Would you like to write the new config to github? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    if [[ $KERNEL_VERSION == "alt-chromeos-5.10" ]]; then
-        cp .config ../../kernel.alt.conf
-    else
-        cp .config ../../kernel.conf
+    read -p "Would you like to make edits to the kernel config? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        make menuconfig
     fi
+
+    read -p "Would you like to write the new config to github? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if [[ $KERNEL_VERSION == "alt-chromeos-5.10" ]]; then
+            cp .config ../../kernel.alt.conf
+        else
+            cp .config ../../kernel.conf
+        fi
+    fi
+
+    echo "Building kernel"
+    read -p "Would you like a full rebuild? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        make clean; make -j$(nproc) || exit
+    else
+        make -j$(nproc) || exit
+    fi
+    
+else
+
+    make -j$(nproc)
+
 fi
 
-echo "Building kernel"
-read -p "Would you like a full rebuild? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    make clean; make -j$(nproc) || exit
-else
-    make -j$(nproc) || exit
-fi
 echo "bzImage and modules built"
 
 cp arch/x86/boot/bzImage ../$BZIMAGE
