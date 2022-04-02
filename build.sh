@@ -69,7 +69,7 @@ fi
 
 make olddefconfig
 
-if [[ ! -v PS1 ]]; then
+if [[ -v PS1 ]]; then
 
     read -p "Would you like to make edits to the kernel config? (y/n) " -n 1 -r
     echo
