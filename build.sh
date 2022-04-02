@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo apt install -y imagemagick git build-essential ncurses-dev xz-utils libssl-dev bc flex libelf-dev bison
+sudo apt install -y imagemagick git build-essential ncurses-dev xz-utils libssl-dev bc flex libelf-dev bison cgpt vboot-kernel-utils
 
 # Exit on errors
 set -e
