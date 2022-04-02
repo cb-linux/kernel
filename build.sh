@@ -17,7 +17,7 @@ if [[ $# -eq 0 ]]; then
 
 else
 
-    export KERNEL_VERSION="chromeos-5.10"
+    export KERNEL_VERSION=$1
 
 fi
 
