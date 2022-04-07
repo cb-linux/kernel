@@ -28,8 +28,8 @@ case $KERNEL_VERSION in
     "1"|"chromeos-5.10")     KERNEL_VERSION="chromeos-5.10"     ;;
     "2"|"alt-chromeos-5.10") KERNEL_VERSION="alt-chromeos-5.10" ;;
     "3"|"chromeos-5.4")      KERNEL_VERSION="chromeos-5.4"      ;;
-    "4"|"chromeos-4.19")      KERNEL_VERSION="chromeos-4.19"    ;;
-    "5"|"chromeos-4.14")      KERNEL_VERSION="chromeos-4.14"    ;;
+    "4"|"chromeos-4.19")     KERNEL_VERSION="chromeos-4.19"     ;;
+    "5"|"chromeos-4.14")     KERNEL_VERSION="chromeos-4.14"     ;;
     "6"|"chromeos-4.4")      KERNEL_VERSION="chromeos-4.4"      ;;
     *) echo "Please supply a valid kernel version"; exit ;;
 esac
