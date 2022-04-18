@@ -65,6 +65,9 @@ cp ../logo/logo_final.ppm drivers/video/logo/logo_linux_clut224.ppm
 # A somewhat commonly-used device, lesser priority than JSL i915
 git apply ../patches/bloog-audio.patch --ignore-space-change --ignore-whitespace --recount || true
 # Super important patch, adds support for Jasperlake (many DEDEDE devices)
+if ! patch -R -p0 -s -f --dry-run <../patches/jsl-i915.patch; then
+  patch -p0 -c -F 1 -l <../patches/jsl-i915.patch
+fi
 git apply ../patches/jsl-i915.patch --ignore-space-change --ignore-whitespace --recount -C1 || exit
 echo "mod" >> .gitignore
 touch .scmversion
