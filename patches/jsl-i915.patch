@@ -1,0 +1,24 @@
+From 3f2499dee6e196edfac7b9c02da66d017ceda24e Mon Sep 17 00:00:00 2001
+From: MilkyDeveloper <48262994+MilkyDeveloper@users.noreply.github.com>
+Date: Sun, 17 Apr 2022 21:01:37 -0500
+Subject: [PATCH] drm/i915/jsl: Remove require_force_probe protection
+
+---
+ drivers/gpu/drm/i915/i915_pci.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/i915/i915_pci.c b/drivers/gpu/drm/i915/i915_pci.c
+index 7d562af84..0f2526200 100644
+--- a/drivers/gpu/drm/i915/i915_pci.c
++++ b/drivers/gpu/drm/i915/i915_pci.c
+@@ -852,7 +852,6 @@ static const struct intel_device_info ehl_info = {
+ static const struct intel_device_info jsl_info = {
+ 	GEN11_FEATURES,
+ 	PLATFORM(INTEL_JASPERLAKE),
+-	.require_force_probe = 1,
+ 	.platform_engine_mask = BIT(RCS0) | BIT(BCS0) | BIT(VCS0) | BIT(VECS0),
+ 	.ppgtt_size = 36,
+ };
+-- 
+2.34.1
+

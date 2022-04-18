@@ -12,9 +12,12 @@ if [[ $# -eq 0 ]]; then
     printf "1: chromeos-5.10:\n  (Kernel version that is up-to-date and has good audio support with SOF)\n"
     printf "2: alt-chromeos-5.10:\n  (Kernel version that is up-to-date but is pinned to a commit that supports KBL/SKL devices which do not support SOF)\n"
     printf "3: chromeos-5.4:\n  (Often causes more issues despite being a commonly-used kernel in ChromeOS)\n"
+    echo "Older kernels that may provide better support for specific boards:"
     printf "4: chromeos-4.19:\n  (For testing purposes)\n"
     printf "5: chromeos-4.14:\n  (For testing purposes)\n"
     printf "6: chromeos-4.4:\n  (For testing purposes; too old for Mesa3D and some other Linux userspace software)\n"
+    echo "Newer kernels that are not widely used within ChromeOS devices:"
+    printf "7: chromeos-5.15:\n  (Similar version to those used in Linux distributions, not used in any ChromeOS devices currently)\n"
 
     read KERNEL_VERSION
 
@@ -31,6 +34,7 @@ case $KERNEL_VERSION in
     "4"|"chromeos-4.19")     KERNEL_VERSION="chromeos-4.19"     ;;
     "5"|"chromeos-4.14")     KERNEL_VERSION="chromeos-4.14"     ;;
     "6"|"chromeos-4.4")      KERNEL_VERSION="chromeos-4.4"      ;;
+    "7"|"chromeos-5.15")      KERNEL_VERSION="chromeos-5.15"    ;;
     *) echo "Please supply a valid kernel version"; exit ;;
 esac
 
@@ -39,8 +43,9 @@ echo "Cloning kernel $KERNEL_VERSION"
 # Latest commit tested for 5.10: 142ef9297957f6df8a08f75d772ae8a5448c6f6c
 
 if [[ $KERNEL_VERSION == "alt-chromeos-5.10" ]]; then
-    git clone --branch $KERNEL_VERSION --single-branch https://chromium.googlesource.com/chromiumos/third_party/kernel.git $KERNEL_VERSION
-    git checkout $(git rev-list -n 1 --first-parent --before="2021-08-1 23:59" $KERNEL_VERSION)
+    git clone --branch chromeos-5.10 --single-branch https://chromium.googlesource.com/chromiumos/third_party/kernel.git $KERNEL_VERSION
+    cd $KERNEL_VERSION
+    git checkout $(git rev-list -n 1 --first-parent --before="2021-08-1 23:59" chromeos-5.10)
 else
     git clone --branch $KERNEL_VERSION --single-branch --depth 1 https://chromium.googlesource.com/chromiumos/third_party/kernel.git $KERNEL_VERSION || true
 fi
@@ -57,7 +62,10 @@ cd $KERNEL_VERSION
 
 echo "Patching the kernel"
 cp ../logo/logo_final.ppm drivers/video/logo/logo_linux_clut224.ppm
-git apply ../patches/* --ignore-space-change --ignore-whitespace || true
+# A somewhat commonly-used device, lesser priority than JSL i915
+git apply ../patches/bloog-audio.patch --ignore-space-change --ignore-whitespace --recount || true
+# Super important patch, adds support for Jasperlake (many DEDEDE devices)
+git apply ../patches/jsl-i915.patch --ignore-space-change --ignore-whitespace --recount -C1 || exit
 echo "mod" >> .gitignore
 touch .scmversion
 
