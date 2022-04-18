@@ -64,11 +64,11 @@ echo "Patching the kernel"
 cp ../logo/logo_final.ppm drivers/video/logo/logo_linux_clut224.ppm
 # A somewhat commonly-used device, lesser priority than JSL i915
 git apply ../patches/bloog-audio.patch --ignore-space-change --ignore-whitespace --recount || true
-# Super important patch, adds support for Jasperlake (many DEDEDE devices)
-if ! patch -R -p0 -s -f --dry-run <../patches/jsl-i915.patch; then
-  patch -p0 -c -F 1 -l <../patches/jsl-i915.patch
-fi
-git apply ../patches/jsl-i915.patch --ignore-space-change --ignore-whitespace --recount -C1 || exit
+# Super important patch, adds support for Jasperlake i915 (many DEDEDE devices)
+grep -C3 "BIT(RCS0) | BIT(BCS0) | BIT(VCS0) | BIT(VECS0)" drivers/gpu/drm/i915/i915_pci.c | grep "jsl_info" -A5 | grep ".require_force_probe = 1" && { 
+    git apply ../patches/jsl-i915.patch --ignore-space-change --ignore-whitespace --recount || true
+}
+grep -C3 "BIT(RCS0) | BIT(BCS0) | BIT(VCS0) | BIT(VECS0)" drivers/gpu/drm/i915/i915_pci.c | grep "jsl_info" -A5 | grep ".require_force_probe = 1" && { echo "JSL Patch failed, exiting!"; exit; }
 echo "mod" >> .gitignore
 touch .scmversion
 
