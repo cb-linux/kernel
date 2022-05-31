@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -v
 
 sudo apt install -y netpbm imagemagick git build-essential ncurses-dev xz-utils libssl-dev bc flex libelf-dev bison cgpt vboot-kernel-utils
 
