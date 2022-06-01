@@ -140,6 +140,7 @@ make -j8 modules_install INSTALL_MOD_PATH=mod
 
 # Creates an archive containing /lib/modules/...
 cd mod
+export XZ_DEFAULTS="-T 0" # Enable multicore xz compression for tar
 tar cvfJ ../../$MODULES lib/
 cd ..
 echo "modules.tar.xz created!"
