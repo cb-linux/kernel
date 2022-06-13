@@ -90,6 +90,11 @@ git apply ../patches/jack-detection.patch || {
     git apply ../patches/jack-detection.patch -R --check && printq "Jack Detection Patch already applied"
 }
 
+# Utility functions not in the ChromeOS Kernel that are needed for the above patch to work
+git apply ../patches/jack-detection-utils.patch || {
+    git apply ../patches/jack-detection-utils.patch -R --check && printq "Jack Detection Utils Patch already applied"
+}
+
 printq "$(ls ../patches) applied"
 
 # Prevents a dirty kernel
@@ -167,7 +172,7 @@ make -j8 modules_install INSTALL_MOD_PATH=mod
 # Creates an archive containing /lib/modules/...
 cd mod
 # Speedy multicore compression
-tar cvfJ -I 'xz -9 -T0' ../../$MODULES lib/
+tar -c -v -f -J -I 'xz -9 -T0' ../../$MODULES lib/
 cd ..
 printq "modules.tar.xz created!"
 
