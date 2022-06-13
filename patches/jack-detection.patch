@@ -1,0 +1,548 @@
+From 028f18129e220d3a4c82fb44c79a3fa0d9bde67a Mon Sep 17 00:00:00 2001
+From: MilkyDeveloper <48262994+MilkyDeveloper@users.noreply.github.com>
+Date: Fri, 10 Jun 2022 13:43:41 -0500
+Subject: [PATCH] Fix Headphone Jack Detection
+
+The card did not map jack pins to controls, which prevents
+PulseAudio/PipeWire from dealing with jack detection. It's likely that
+jack detection was only tested with the CRAS server and extensions of
+UCM.
+
+This pull-request was originally submitted here (https://github.com/thesofproject/linux/pull/3681),
+by Pierre-Louis Bossart (@plbossart). Me, MilkyDeveloper, reformatted this PR to a patch file
+and backported it to 5.10 downstream.
+
+---
+ sound/soc/intel/boards/bxt_da7219_max98357a.c | 21 +++++++++++++----
+ sound/soc/intel/boards/cml_rt1011_rt5682.c    | 23 +++++++++++++++----
+ sound/soc/intel/boards/glk_rt5682_max98357a.c | 21 +++++++++++++----
+ sound/soc/intel/boards/kbl_da7219_max98357a.c | 21 +++++++++++++----
+ sound/soc/intel/boards/kbl_da7219_max98927.c  | 21 +++++++++++++----
+ sound/soc/intel/boards/kbl_rt5663_max98927.c  | 21 +++++++++++++----
+ .../intel/boards/kbl_rt5663_rt5514_max98927.c | 21 +++++++++++++----
+ .../soc/intel/boards/skl_nau88l25_max98357a.c | 20 ++++++++++++----
+ sound/soc/intel/boards/skl_nau88l25_ssm4567.c | 20 ++++++++++++----
+ sound/soc/intel/boards/sof_cs42l42.c          | 23 +++++++++++++++----
+ sound/soc/intel/boards/sof_da7219_max98373.c  | 23 +++++++++++++++----
+ sound/soc/intel/boards/sof_nau8825.c          | 23 +++++++++++++++----
+ sound/soc/intel/boards/sof_rt5682.c           | 23 +++++++++++++++----
+ 13 files changed, 224 insertions(+), 57 deletions(-)
+
+diff --git a/sound/soc/intel/boards/bxt_da7219_max98357a.c b/sound/soc/intel/boards/bxt_da7219_max98357a.c
+index e67ddfb8e..acdbfe7fb 100644
+--- a/sound/soc/intel/boards/bxt_da7219_max98357a.c
++++ b/sound/soc/intel/boards/bxt_da7219_max98357a.c
+@@ -186,6 +186,17 @@ static const struct snd_soc_dapm_route gemini_map[] = {
+ 	{"ssp2 Rx", NULL, "Capture"},
+ };
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static int broxton_ssp_fixup(struct snd_soc_pcm_runtime *rtd,
+ 			struct snd_pcm_hw_params *params)
+ {
+@@ -231,10 +242,12 @@ static int broxton_da7219_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(rtd->card, "Headset Jack",
+-			SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
+-			SND_JACK_BTN_2 | SND_JACK_BTN_3 | SND_JACK_LINEOUT,
+-			&broxton_headset, NULL, 0);
++	ret = snd_soc_card_jack_new_pins(rtd->card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
++					 SND_JACK_BTN_2 | SND_JACK_BTN_3 | SND_JACK_LINEOUT,
++					 &broxton_headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed: %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/cml_rt1011_rt5682.c b/sound/soc/intel/boards/cml_rt1011_rt5682.c
+index 27615acdd..5bd3a4fc5 100644
+--- a/sound/soc/intel/boards/cml_rt1011_rt5682.c
++++ b/sound/soc/intel/boards/cml_rt1011_rt5682.c
+@@ -121,6 +121,17 @@ static const struct snd_soc_dapm_route cml_rt1011_tt_map[] = {
+ 	{"TR Ext Spk", NULL, "TR SPO" },
+ };
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static int cml_rt5682_codec_init(struct snd_soc_pcm_runtime *rtd)
+ {
+ 	struct card_private *ctx = snd_soc_card_get_drvdata(rtd->card);
+@@ -137,11 +148,13 @@ static int cml_rt5682_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(rtd->card, "Headset Jack",
+-				    SND_JACK_HEADSET | SND_JACK_BTN_0 |
+-				    SND_JACK_BTN_1 | SND_JACK_BTN_2 |
+-				    SND_JACK_BTN_3,
+-				    &ctx->headset, NULL, 0);
++	ret = snd_soc_card_jack_new_pins(rtd->card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 |
++					 SND_JACK_BTN_1 | SND_JACK_BTN_2 |
++					 SND_JACK_BTN_3,
++					 &ctx->headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed: %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/glk_rt5682_max98357a.c b/sound/soc/intel/boards/glk_rt5682_max98357a.c
+index 9dcb99601..fd796dae8 100644
+--- a/sound/soc/intel/boards/glk_rt5682_max98357a.c
++++ b/sound/soc/intel/boards/glk_rt5682_max98357a.c
+@@ -78,6 +78,17 @@ static const struct snd_soc_dapm_widget geminilake_widgets[] = {
+ 	SND_SOC_DAPM_SPK("HDMI3", NULL),
+ };
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static const struct snd_soc_dapm_route geminilake_map[] = {
+ 	/* HP jack connectors - unknown if we have jack detection */
+ 	{ "Headphone Jack", NULL, "HPOL" },
+@@ -173,10 +184,12 @@ static int geminilake_rt5682_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(rtd->card, "Headset Jack",
+-			SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
+-			SND_JACK_BTN_2 | SND_JACK_BTN_3 | SND_JACK_LINEOUT,
+-			&ctx->geminilake_headset, NULL, 0);
++	ret = snd_soc_card_jack_new_pins(rtd->card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
++					 SND_JACK_BTN_2 | SND_JACK_BTN_3 | SND_JACK_LINEOUT,
++					 &ctx->geminilake_headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed: %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/kbl_da7219_max98357a.c b/sound/soc/intel/boards/kbl_da7219_max98357a.c
+index 14b625e94..8b927afe8 100644
+--- a/sound/soc/intel/boards/kbl_da7219_max98357a.c
++++ b/sound/soc/intel/boards/kbl_da7219_max98357a.c
+@@ -99,6 +99,17 @@ static const struct snd_soc_dapm_widget kabylake_widgets[] = {
+ 			SND_SOC_DAPM_POST_PMD),
+ };
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static const struct snd_soc_dapm_route kabylake_map[] = {
+ 	{ "Headphone Jack", NULL, "HPL" },
+ 	{ "Headphone Jack", NULL, "HPR" },
+@@ -179,10 +190,12 @@ static int kabylake_da7219_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(kabylake_audio_card, "Headset Jack",
+-			SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
+-			SND_JACK_BTN_2 | SND_JACK_BTN_3 | SND_JACK_LINEOUT,
+-			&ctx->kabylake_headset, NULL, 0);
++	ret = snd_soc_card_jack_new_pins(kabylake_audio_card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
++					 SND_JACK_BTN_2 | SND_JACK_BTN_3 | SND_JACK_LINEOUT,
++					 &ctx->kabylake_headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed: %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/kbl_da7219_max98927.c b/sound/soc/intel/boards/kbl_da7219_max98927.c
+index 2b43459ad..2f8336702 100644
+--- a/sound/soc/intel/boards/kbl_da7219_max98927.c
++++ b/sound/soc/intel/boards/kbl_da7219_max98927.c
+@@ -119,6 +119,17 @@ static const struct snd_soc_dapm_widget kabylake_widgets[] = {
+ 			SND_SOC_DAPM_POST_PMD),
+ };
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static const struct snd_soc_dapm_route kabylake_map[] = {
+ 	/* speaker */
+ 	{ "Left Spk", NULL, "Left BE_OUT" },
+@@ -354,10 +365,12 @@ static int kabylake_da7219_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(kabylake_audio_card, "Headset Jack",
+-			SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
+-			SND_JACK_BTN_2 | SND_JACK_BTN_3 | SND_JACK_LINEOUT,
+-			&ctx->kabylake_headset, NULL, 0);
++	ret = snd_soc_card_jack_new_pins(kabylake_audio_card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
++					 SND_JACK_BTN_2 | SND_JACK_BTN_3 | SND_JACK_LINEOUT,
++					 &ctx->kabylake_headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed: %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/kbl_rt5663_max98927.c b/sound/soc/intel/boards/kbl_rt5663_max98927.c
+index a3e040a24..2e0b384de 100644
+--- a/sound/soc/intel/boards/kbl_rt5663_max98927.c
++++ b/sound/soc/intel/boards/kbl_rt5663_max98927.c
+@@ -206,6 +206,17 @@ static const struct snd_soc_dapm_widget kabylake_5663_widgets[] = {
+ 			SND_SOC_DAPM_POST_PMD),
+ };
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static const struct snd_soc_dapm_route kabylake_5663_map[] = {
+ 	{ "Headphone Jack", NULL, "Platform Clock" },
+ 	{ "Headphone Jack", NULL, "HPOL" },
+@@ -271,10 +282,12 @@ static int kabylake_rt5663_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(kabylake_audio_card, "Headset Jack",
+-			SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
+-			SND_JACK_BTN_2 | SND_JACK_BTN_3, &ctx->kabylake_headset,
+-			NULL, 0);
++	ret = snd_soc_card_jack_new_pins(kabylake_audio_card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
++					 SND_JACK_BTN_2 | SND_JACK_BTN_3,
++					 &ctx->kabylake_headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/kbl_rt5663_rt5514_max98927.c b/sound/soc/intel/boards/kbl_rt5663_rt5514_max98927.c
+index 808327017..236070706 100644
+--- a/sound/soc/intel/boards/kbl_rt5663_rt5514_max98927.c
++++ b/sound/soc/intel/boards/kbl_rt5663_rt5514_max98927.c
+@@ -187,6 +187,17 @@ static const struct snd_soc_dapm_widget kabylake_widgets[] = {
+ 			SND_SOC_DAPM_POST_PMD),
+ };
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static const struct snd_soc_dapm_route kabylake_map[] = {
+ 	/* Headphones */
+ 	{ "Headphone Jack", NULL, "Platform Clock SSP1" },
+@@ -271,10 +282,12 @@ static int kabylake_rt5663_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(&kabylake_audio_card, "Headset Jack",
+-			SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
+-			SND_JACK_BTN_2 | SND_JACK_BTN_3, &ctx->kabylake_headset,
+-			NULL, 0);
++	ret = snd_soc_card_jack_new_pins(&kabylake_audio_card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
++					 SND_JACK_BTN_2 | SND_JACK_BTN_3,
++					 &ctx->kabylake_headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/skl_nau88l25_max98357a.c b/sound/soc/intel/boards/skl_nau88l25_max98357a.c
+index 7ebc5b728..3f6eeca77 100644
+--- a/sound/soc/intel/boards/skl_nau88l25_max98357a.c
++++ b/sound/soc/intel/boards/skl_nau88l25_max98357a.c
+@@ -92,6 +92,17 @@ static const struct snd_soc_dapm_widget skylake_widgets[] = {
+ 			SND_SOC_DAPM_POST_PMD),
+ };
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static const struct snd_soc_dapm_route skylake_map[] = {
+ 	/* HP jack connectors - unknown if we have jack detection */
+ 	{ "Headphone Jack", NULL, "HPOL" },
+@@ -159,10 +170,11 @@ static int skylake_nau8825_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(&skylake_audio_card, "Headset Jack",
+-			SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
+-			SND_JACK_BTN_2 | SND_JACK_BTN_3, &skylake_headset,
+-			NULL, 0);
++	ret = snd_soc_card_jack_new_pins(&skylake_audio_card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
++					 SND_JACK_BTN_2 | SND_JACK_BTN_3, &skylake_headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/skl_nau88l25_ssm4567.c b/sound/soc/intel/boards/skl_nau88l25_ssm4567.c
+index 8bcf6f7b2..705b0ddf6 100644
+--- a/sound/soc/intel/boards/skl_nau88l25_ssm4567.c
++++ b/sound/soc/intel/boards/skl_nau88l25_ssm4567.c
+@@ -97,6 +97,17 @@ static const struct snd_soc_dapm_widget skylake_widgets[] = {
+ 			SND_SOC_DAPM_POST_PMD),
+ };
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static const struct snd_soc_dapm_route skylake_map[] = {
+ 	/* HP jack connectors - unknown if we have jack detection */
+ 	{"Headphone Jack", NULL, "HPOL"},
+@@ -179,10 +190,11 @@ static int skylake_nau8825_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * 4 buttons here map to the google Reference headset
+ 	 * The use of these buttons can be decided by the user space.
+ 	 */
+-	ret = snd_soc_card_jack_new(&skylake_audio_card, "Headset Jack",
+-		SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
+-		SND_JACK_BTN_2 | SND_JACK_BTN_3, &skylake_headset,
+-		NULL, 0);
++	ret = snd_soc_card_jack_new_pins(&skylake_audio_card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 | SND_JACK_BTN_1 |
++					 SND_JACK_BTN_2 | SND_JACK_BTN_3, &skylake_headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/sof_cs42l42.c b/sound/soc/intel/boards/sof_cs42l42.c
+index ce78c1879..811cdf8d3 100644
+--- a/sound/soc/intel/boards/sof_cs42l42.c
++++ b/sound/soc/intel/boards/sof_cs42l42.c
+@@ -52,6 +52,17 @@ enum {
+ 	LINK_HDMI = 4,
+ };
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ /* Default: SSP2 */
+ static unsigned long sof_cs42l42_quirk = SOF_CS42L42_SSP_CODEC(2);
+ 
+@@ -98,11 +109,13 @@ static int sof_cs42l42_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(rtd->card, "Headset Jack",
+-				    SND_JACK_HEADSET | SND_JACK_BTN_0 |
+-				    SND_JACK_BTN_1 | SND_JACK_BTN_2 |
+-				    SND_JACK_BTN_3,
+-				    jack, NULL, 0);
++	ret = snd_soc_card_jack_new_pins(rtd->card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 |
++					 SND_JACK_BTN_1 | SND_JACK_BTN_2 |
++					 SND_JACK_BTN_3,
++					 jack,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed: %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/sof_da7219_max98373.c b/sound/soc/intel/boards/sof_da7219_max98373.c
+index b7b3b0bf9..34cf849a8 100644
+--- a/sound/soc/intel/boards/sof_da7219_max98373.c
++++ b/sound/soc/intel/boards/sof_da7219_max98373.c
+@@ -135,6 +135,17 @@ static const struct snd_soc_dapm_route max98360a_map[] = {
+ 	{"DMic", NULL, "SoC DMIC"},
+ };
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static struct snd_soc_jack headset;
+ 
+ static int da7219_codec_init(struct snd_soc_pcm_runtime *rtd)
+@@ -156,11 +167,13 @@ static int da7219_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(rtd->card, "Headset Jack",
+-				    SND_JACK_HEADSET | SND_JACK_BTN_0 |
+-				    SND_JACK_BTN_1 | SND_JACK_BTN_2 |
+-				    SND_JACK_BTN_3 | SND_JACK_LINEOUT,
+-				    &headset, NULL, 0);
++	ret = snd_soc_card_jack_new_pins(rtd->card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 |
++					 SND_JACK_BTN_1 | SND_JACK_BTN_2 |
++					 SND_JACK_BTN_3 | SND_JACK_LINEOUT,
++					 &headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed: %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/sof_nau8825.c b/sound/soc/intel/boards/sof_nau8825.c
+index 33de043b6..f49700eb7 100644
+--- a/sound/soc/intel/boards/sof_nau8825.c
++++ b/sound/soc/intel/boards/sof_nau8825.c
+@@ -81,6 +81,17 @@ static int sof_hdmi_init(struct snd_soc_pcm_runtime *rtd)
+ 	return 0;
+ }
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static int sof_nau8825_codec_init(struct snd_soc_pcm_runtime *rtd)
+ {
+ 	struct sof_card_private *ctx = snd_soc_card_get_drvdata(rtd->card);
+@@ -93,11 +104,13 @@ static int sof_nau8825_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(rtd->card, "Headset Jack",
+-				    SND_JACK_HEADSET | SND_JACK_BTN_0 |
+-				    SND_JACK_BTN_1 | SND_JACK_BTN_2 |
+-				    SND_JACK_BTN_3,
+-				    &ctx->sof_headset, NULL, 0);
++	ret = snd_soc_card_jack_new_pins(rtd->card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 |
++					 SND_JACK_BTN_1 | SND_JACK_BTN_2 |
++					 SND_JACK_BTN_3,
++					 &ctx->sof_headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed: %d\n", ret);
+ 		return ret;
+diff --git a/sound/soc/intel/boards/sof_rt5682.c b/sound/soc/intel/boards/sof_rt5682.c
+index fef59d97a..fb2847341 100644
+--- a/sound/soc/intel/boards/sof_rt5682.c
++++ b/sound/soc/intel/boards/sof_rt5682.c
+@@ -247,6 +247,17 @@ static int sof_hdmi_init(struct snd_soc_pcm_runtime *rtd)
+ 	return 0;
+ }
+ 
++static struct snd_soc_jack_pin jack_pins[] = {
++	{
++		.pin    = "Headphone Jack",
++		.mask   = SND_JACK_HEADPHONE,
++	},
++	{
++		.pin    = "Headset Mic",
++		.mask   = SND_JACK_MICROPHONE,
++	},
++};
++
+ static int sof_rt5682_codec_init(struct snd_soc_pcm_runtime *rtd)
+ {
+ 	struct sof_card_private *ctx = snd_soc_card_get_drvdata(rtd->card);
+@@ -294,11 +305,13 @@ static int sof_rt5682_codec_init(struct snd_soc_pcm_runtime *rtd)
+ 	 * Headset buttons map to the google Reference headset.
+ 	 * These can be configured by userspace.
+ 	 */
+-	ret = snd_soc_card_jack_new(rtd->card, "Headset Jack",
+-				    SND_JACK_HEADSET | SND_JACK_BTN_0 |
+-				    SND_JACK_BTN_1 | SND_JACK_BTN_2 |
+-				    SND_JACK_BTN_3,
+-				    &ctx->sof_headset, NULL, 0);
++	ret = snd_soc_card_jack_new_pins(rtd->card, "Headset Jack",
++					 SND_JACK_HEADSET | SND_JACK_BTN_0 |
++					 SND_JACK_BTN_1 | SND_JACK_BTN_2 |
++					 SND_JACK_BTN_3,
++					 &ctx->sof_headset,
++					 jack_pins,
++					 ARRAY_SIZE(jack_pins));
+ 	if (ret) {
+ 		dev_err(rtd->dev, "Headset Jack creation failed: %d\n", ret);
+ 		return ret;
+-- 
+2.34.1
+
