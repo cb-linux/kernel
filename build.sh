@@ -172,7 +172,11 @@ make -j8 modules_install INSTALL_MOD_PATH=mod
 # Creates an archive containing /lib/modules/...
 cd mod
 # Speedy multicore compression
-tar -c -v -f -J -I 'xz -9 -T0' ../../$MODULES lib/
+# Some version of tar don't support arguments after the command in the -I option,
+# so we're putting the arguments and the command in a script
+echo "xz -9 -T0" > fastxz
+chmod +x fastxz
+tar -cvI './fastxz' -f ../../$MODULES lib/
 cd ..
 printq "modules.tar.xz created!"
 
