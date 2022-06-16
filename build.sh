@@ -53,6 +53,7 @@ if [[ ! -d $KERNEL_VERSION ]]; then
         git clone --branch chromeos-5.10 --single-branch https://chromium.googlesource.com/chromiumos/third_party/kernel.git $KERNEL_VERSION
         cd $KERNEL_VERSION
         git checkout $(git rev-list -n 1 --first-parent --before="2021-08-1 23:59" chromeos-5.10)
+        cd ..
     else
         git clone --branch $KERNEL_VERSION --single-branch --depth 1 https://chromium.googlesource.com/chromiumos/third_party/kernel.git $KERNEL_VERSION
     fi
