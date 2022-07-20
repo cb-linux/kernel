@@ -4,6 +4,7 @@
 !kernel.alt.conf
 !build.sh
 !kernel.flags
+!kernel.root.flags.sh
 !patches
 !patches/*
 !logo
