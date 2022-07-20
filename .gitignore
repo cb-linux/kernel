@@ -11,3 +11,4 @@ logo/*
 !logo/logo.png
 !genimg.sh
 !.gitignore
+!.github/*
