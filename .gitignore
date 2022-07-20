@@ -13,3 +13,4 @@ logo/*
 !.gitignore
 !.github
 !.github/*
+!.github/workflows/*
