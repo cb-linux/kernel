@@ -1,5 +1,7 @@
 # Ignore kernel files built or downloaded by kernel/build.sh
 *
+!kernel.conf
+!kernel.alt.conf
 !build.sh
 !kernel.flags
 !patches

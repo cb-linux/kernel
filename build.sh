@@ -107,11 +107,11 @@ printq "Copying and updating kernel config"
 if [[ $KERNEL_VERSION == "alt-chromeos-5.10" ]]; then
     BZIMAGE="bzImage.alt"
     MODULES="modules.alt.tar.xz"
-    [[ -f .config ]] || cp ../../kernel.alt.conf .config || exit
+    [[ -f .config ]] || cp ../kernel.alt.conf .config || exit
 else
     BZIMAGE="bzImage"
     MODULES="modules.tar.xz"
-    [[ -f .config ]] || cp ../../kernel.conf .config || exit
+    [[ -f .config ]] || cp ../kernel.conf .config || exit
 fi
 
 make olddefconfig
@@ -129,9 +129,9 @@ if [[ -t 0 ]]; then
     echo
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         if [[ $KERNEL_VERSION == "alt-chromeos-5.10" ]]; then
-            cp .config ../../kernel.alt.conf
+            cp .config ../kernel.alt.conf
         else
-            cp .config ../../kernel.conf
+            cp .config ../kernel.conf
         fi
     fi
 
