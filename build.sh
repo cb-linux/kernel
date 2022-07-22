@@ -106,11 +106,17 @@ printq "Copying and updating kernel config"
 
 if [[ $KERNEL_VERSION == "alt-chromeos-5.10" ]]; then
     BZIMAGE="bzImage.alt"
-    MODULES="modules.alt.tar.xz"
+    MODULES="modules.alt"
+    VMLINUZ="vmlinuz-breath-alt"
+    SYSTEM_MAP="System.map-breath-alt"
+    CONFIG="config-breath-alt"
     [[ -f .config ]] || cp ../../kernel.alt.conf .config || exit
 else
     BZIMAGE="bzImage"
-    MODULES="modules.tar.xz"
+    MODULES="modules"
+    VMLINUZ="vmlinuz-breath"
+    SYSTEM_MAP="System.map-breath"
+    CONFIG="config-breath"
     [[ -f .config ]] || cp ../../kernel.conf .config || exit
 fi
 
@@ -168,7 +174,7 @@ printq "Signed bzImage created\!" # Shell expansion weirdness
 
 rm -rf mod || true
 mkdir mod
-make -j8 modules_install INSTALL_MOD_PATH=mod
+make -j$(nproc) modules_install INSTALL_MOD_PATH=mod
 
 # Creates an archive containing /lib/modules/...
 cd mod
@@ -177,9 +183,15 @@ cd mod
 # so we're putting the arguments and the command in a script
 echo "xz -9 -T0" > fastxz
 chmod +x fastxz
-tar -cvI './fastxz' -f ../../$MODULES lib/
-cd ..
+tar -cvI './fastxz' -f ../../$MODULES.tar.xz lib/
 printq "modules.tar.xz created!"
 
+# Copy vmlinuz, system.map and config in kernel directory
+cp arch/x86/boot/bzImage ../$VMLINUZ
+cp System.map ../$SYSTEM_MAP
+cp .config ../$CONFIG
+cp mod/lib/modules/*/ ../$MODULES
+
+cd ..
 printq "Command to extract modules to USB:"
 printq "sudo rm -rf /mnt/lib/modules/* && sudo cp -Rv kernel/mod/lib/modules/* /mnt/lib/modules && sync"
