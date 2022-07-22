@@ -105,16 +105,14 @@ touch .scmversion
 printq "Copying and updating kernel config"
 
 if [[ $KERNEL_VERSION == "alt-chromeos-5.10" ]]; then
-    BZIMAGE="bzImage.alt"
-    MODULES="modules.alt"
-    VMLINUZ="vmlinuz-breath-alt"
+    MODULES="modules.alt.tar.xz"
+    VMLINUZ="bzImage.alt"
     SYSTEM_MAP="System.map-breath-alt"
     CONFIG="config-breath-alt"
     [[ -f .config ]] || cp ../../kernel.alt.conf .config || exit
 else
-    BZIMAGE="bzImage"
-    MODULES="modules"
-    VMLINUZ="vmlinuz-breath"
+    MODULES="modules.tar.xz"
+    VMLINUZ="bzImage"
     SYSTEM_MAP="System.map-breath"
     CONFIG="config-breath"
     [[ -f .config ]] || cp ../../kernel.conf .config || exit
@@ -158,9 +156,6 @@ fi
 
 printq "bzImage and modules built"
 
-cp arch/x86/boot/bzImage ../$BZIMAGE
-printq "bzImage created!"
-
 # Sign the kernel
 futility --debug vbutil_kernel \
     --arch x86_64 --version 1 \
@@ -168,8 +163,8 @@ futility --debug vbutil_kernel \
     --signprivate /usr/share/vboot/devkeys/kernel_data_key.vbprivk \
     --bootloader ../kernel.flags \
     --config ../kernel.flags \
-    --vmlinuz ../bzImage \
-    --pack ../bzImage.signed
+    --vmlinuz ../$VMLINUZ \
+    --pack ../${VMLINUZ}.signed
 printq "Signed bzImage created\!" # Shell expansion weirdness
 
 rm -rf mod || true
@@ -183,14 +178,13 @@ cd mod
 # so we're putting the arguments and the command in a script
 echo "xz -9 -T0" > fastxz
 chmod +x fastxz
-tar -cvI './fastxz' -f ../../$MODULES.tar.xz lib/
+tar -cvI './fastxz' -f ../../$MODULES lib/
 printq "modules.tar.xz created!"
 
-# Copy vmlinuz, system.map and config in kernel directory
+# Copy the vmlinuz, system.map, and kernel config to the kernel directory
 cp arch/x86/boot/bzImage ../$VMLINUZ
 cp System.map ../$SYSTEM_MAP
 cp .config ../$CONFIG
-cp mod/lib/modules/*/ ../$MODULES
 
 cd ..
 printq "Command to extract modules to USB:"
