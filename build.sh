@@ -121,8 +121,8 @@ fi
 
 make olddefconfig
 
-# If the terminal is interactive or running within act
-if [[ -t 0 ]] || [[ -f /.dockerenv ]]; then
+# If the terminal is interactive and not running in docker
+if [[ -t 0 ]] && [[ ! -f /.dockerenv ]]; then
 
     read -p "Would you like to make edits to the kernel config? (y/n) " -n 1 -r
     echo
