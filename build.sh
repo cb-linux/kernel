@@ -154,6 +154,7 @@ else
 
 fi
 
+cp arch/x86/boot/bzImage ../$VMLINUZ
 printq "bzImage and modules built"
 
 # Sign the kernel
@@ -182,7 +183,6 @@ tar -cvI './fastxz' -f ../../$MODULES lib/
 printq "modules.tar.xz created!"
 
 # Copy the vmlinuz, system.map, and kernel config to the kernel directory
-cp arch/x86/boot/bzImage ../$VMLINUZ
 cp System.map ../$SYSTEM_MAP
 cp .config ../$CONFIG
 
