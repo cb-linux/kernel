@@ -7,6 +7,7 @@ SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && 
 # shellcheck source=../utils/functions.sh
 . "${SCRIPT_DIR}/../utils/functions.sh"
 
+sudo apt update -y
 sudo apt install -y netpbm imagemagick git build-essential ncurses-dev xz-utils libssl-dev bc flex libelf-dev bison cgpt vboot-kernel-utils
 
 # Exit on errors
