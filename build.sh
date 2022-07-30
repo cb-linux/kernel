@@ -184,6 +184,7 @@ tar -cvI './fastxz' -f ../../$MODULES lib/
 printq "modules.tar.xz created!"
 
 # Copy the vmlinuz, system.map, and kernel config to the kernel directory
+cd ..
 cp System.map ../$SYSTEM_MAP
 cp .config ../$CONFIG
 
